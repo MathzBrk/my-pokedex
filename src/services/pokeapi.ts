@@ -20,13 +20,26 @@ export async function fetchPokemonList(
   options?: FetchOptions,
 ): Promise<PokemonListResponse> {
   const url = `${BASE_URL}/pokemon?limit=${limit}&offset=${offset}`;
-  const response = await fetch(url, { signal: options?.signal });
+  let data: PokemonListResponse;
 
-  if (!response.ok) {
-    throw new Error('Falha ao buscar lista de Pokémon');
+  try {
+    const response = await fetch(url, { signal: options?.signal });
+    if (!response.ok) {
+      throw new Error('Falha ao buscar lista de Pokémon');
+    }
+    data = await response.json();
+  } catch (error) {
+    console.log('Erro ao buscar lista de Pokémon:', error);
+    return {
+      count: 0,
+      next: null,
+      previous: null,
+      results: [],
+    }
   }
 
-  return response.json();
+
+  return data;
 }
 
 export type PokemonDetailResponse = {

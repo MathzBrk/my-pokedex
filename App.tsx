@@ -1,22 +1,22 @@
-import React from 'react';
-import { StatusBar } from 'expo-status-bar';
-import { View, StyleSheet } from 'react-native';
-import LoginScreen from './src/pages/Login';
-import PokemonListScreen from './src/pages/PokemonList';
-import PokemonDetailScreen from './src/pages/PokemonDetail';
+import React from "react";
+import { StatusBar } from "expo-status-bar";
+import { View, StyleSheet } from "react-native";
+import LoginScreen from "./src/pages/Login";
+import { NavigationContainer } from "@react-navigation/native";
+import AppNavigator from "./src/routes";
 
 export default function App() {
   return (
-    <View style={styles.container}>
+    <NavigationContainer>
       <StatusBar style="dark" />
-      < LoginScreen/>
-    </View>
+      <AppNavigator />
+    </NavigationContainer>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
 });
