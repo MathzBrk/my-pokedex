@@ -1,43 +1,166 @@
-import React from 'react';
-import { View, Text, Image, ScrollView } from 'react-native';
-import { createStyles } from './styles';
-import { useTheme } from '../../global/themes';
-import { useRoute } from '@react-navigation/native';
-import { RouteProp } from '@react-navigation/native';
-import { RootStackParamList } from '../../routes';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  Image,
+  ScrollView,
+  ActivityIndicator,
+  TouchableOpacity,
+} from "react-native";
+import { createStyles } from "./styles";
+import { useTheme } from "../../global/themes";
+import { useRoute } from "@react-navigation/native";
+import { RouteProp } from "@react-navigation/native";
+import { RootStackParamList } from "../../routes";
 
-const MOCK_POKEMON_DETAIL = {
-  id: 25,
-  name: 'pikachu',
-  imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png',
-  types: ['electric'],
-  height: 4,
-  weight: 60,
-  stats: [
-    { name: 'hp', value: 35 },
-    { name: 'attack', value: 55 },
-    { name: 'defense', value: 40 },
-    { name: 'speed', value: 90 },
-  ],
-  description:
-    'Whenever Pikachu comes across something new, it blasts it with a jolt of electricity. If you come across a blackened berry, it is evidence that this Pokémon mistook the intensity of its charge.',
+const MOCK_POKEMONS: PokemonDetailState[] = [
+  {
+    id: 4,
+    name: "charmander",
+    imageUrl:
+      "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/4.png",
+    types: ["fire"],
+    height: 6,
+    weight: 85,
+    stats: [
+      { name: "hp", value: 39 },
+      { name: "attack", value: 52 },
+      { name: "defense", value: 43 },
+      { name: "speed", value: 65 },
+    ],
+    description:
+      "O Charmander tem uma chama acesa na ponta da cauda desde o nascimento. Se a chama apagar, o Charmander morrerá.",
+  },
+  {
+    id: 1,
+    name: "bulbasaur",
+    imageUrl:
+      "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png",
+    types: ["grass", "poison"],
+    height: 7,
+    weight: 69,
+    stats: [
+      { name: "hp", value: 45 },
+      { name: "attack", value: 49 },
+      { name: "defense", value: 49 },
+      { name: "speed", value: 45 },
+    ],
+    description:
+      "A seed was planted on its back at birth. As it grows, the seed also grows larger.",
+  },
+  {
+    id: 7,
+    name: "squirtle",
+    imageUrl:
+      "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/7.png",
+    types: ["water"],
+    height: 5,
+    weight: 90,
+    stats: [
+      { name: "hp", value: 44 },
+      { name: "attack", value: 48 },
+      { name: "defense", value: 65 },
+      { name: "speed", value: 43 },
+    ],
+    description:
+      "When it retracts its long neck into its shell, it squirts out water with vigorous force.",
+  },
+];
+
+type PokemonDetailState = {
+  id: number;
+  name: string;
+  imageUrl: string;
+  types: string[];
+  height: number;
+  weight: number;
+  stats: { name: string; value: number }[];
+  description: string;
 };
 
 export default function PokemonDetailScreen() {
-  const pokemon = MOCK_POKEMON_DETAIL;
   const theme = useTheme();
   const styles = createStyles(theme);
-  const route = useRoute<RouteProp<RootStackParamList, 'PokemonDetail'>>();
+  const route = useRoute<RouteProp<RootStackParamList, "PokemonDetail">>();
   const { id } = route.params;
+
+  const [pokemon, setPokemonDetail] = useState<PokemonDetailState | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchPokemonDetail = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        const pokemon = MOCK_POKEMONS.find((p) => p.id === id);
+        if (!pokemon) {
+          throw new Error("Pokémon não encontrado");
+        }
+        setPokemonDetail(pokemon);
+      } catch (err) {
+        setError("Failed to fetch Pokémon detail");
+        setPokemonDetail(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPokemonDetail();
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <View
+        style={[
+          styles.container,
+          { justifyContent: "center", alignItems: "center" },
+        ]}
+      >
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={{ marginTop: 16, color: theme.colors.text }}>
+          Carregando detalhes (simulado)...
+        </Text>
+      </View>
+    );
+  }
+
+  if (error || !pokemon) {
+    return (
+      <View
+        style={[
+          styles.container,
+          { justifyContent: "center", alignItems: "center" },
+        ]}
+      >
+        <Text style={{ color: theme.colors.text, marginBottom: 16 }}>
+          {error ?? "Erro inesperado na simulação."}
+        </Text>
+        <TouchableOpacity
+          style={{
+            paddingHorizontal: 16,
+            paddingVertical: 10,
+            borderRadius: 24,
+            backgroundColor: theme.colors.accent,
+          }}
+        >
+          <Text style={{ color: theme.colors.text, fontWeight: "bold" }}>
+            Voltar
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.sectionText}>
-        ID informado: {id}
-      </Text>
+      <Text style={styles.sectionText}>ID informado: {id}</Text>
       <View style={styles.header}>
         <View style={styles.nameRow}>
           <Text style={styles.name}>{pokemon.name}</Text>
-          <Text style={styles.id}>#{String(pokemon.id).padStart(3, '0')}</Text>
+          <Text style={styles.id}>#{String(pokemon.id).padStart(3, "0")}</Text>
         </View>
 
         <View style={styles.typeContainer}>
@@ -79,5 +202,4 @@ export default function PokemonDetailScreen() {
       </View>
     </ScrollView>
   );
-};
-
+}
