@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  Image,
   ScrollView,
   ActivityIndicator,
   TouchableOpacity,
@@ -18,6 +17,7 @@ import {
   fetchPokemonSpecies,
   type PokemonSpeciesResponse,
 } from "../../services/pokeapi";
+import Sprites from "../../components/Sprites";
 
 const MOCK_POKEMONS: PokemonDetailState[] = [
   {
@@ -214,14 +214,16 @@ export default function PokemonDetailScreen() {
           ))}
         </View>
 
-        {pokemon.sprites.front_default ? (
-          <Image
-            source={{
-              uri: pokemon.sprites.front_default,
-            }}
-            style={styles.image}
-          />
-        ) : null}
+        <Sprites
+          images={[
+            pokemon.sprites.front_default,
+            pokemon.sprites.back_default,
+            pokemon.sprites.front_shiny,
+            pokemon.sprites.back_shiny,
+          ]}
+          size={160}
+          carousel={true}
+        />
       </View>
 
       <View style={styles.section}>
