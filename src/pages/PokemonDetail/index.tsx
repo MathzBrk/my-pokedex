@@ -12,6 +12,10 @@ import { useTheme } from "../../global/themes";
 import { useRoute } from "@react-navigation/native";
 import { RouteProp } from "@react-navigation/native";
 import { RootStackParamList } from "../../routes";
+import {
+  fetchPokemonDetail as fetchPokemonDetailAPI,
+  type PokemonDetailResponse,
+} from "../../services/pokeapi";
 
 const MOCK_POKEMONS: PokemonDetailState[] = [
   {
@@ -84,31 +88,38 @@ export default function PokemonDetailScreen() {
   const route = useRoute<RouteProp<RootStackParamList, "PokemonDetail">>();
   const { id } = route.params;
 
-  const [pokemon, setPokemonDetail] = useState<PokemonDetailState | null>(null);
+  const [pokemon, setPokemonDetail] = useState<PokemonDetailResponse | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchPokemonDetail = async () => {
+    const controller = new AbortController();
+
+    const loadPokemon = async () => {
       setIsLoading(true);
       setError(null);
 
       try {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        const pokemon = MOCK_POKEMONS.find((p) => p.id === id);
-        if (!pokemon) {
-          throw new Error("Pokémon não encontrado");
+        const data = await fetchPokemonDetailAPI(id, {
+          signal: controller.signal,
+        });
+        setPokemonDetail(data);
+      } catch (error) {
+        if (error instanceof Error && error.name !== "AbortError") {
+          setError(error.message);
         }
-        setPokemonDetail(pokemon);
-      } catch (err) {
-        setError("Failed to fetch Pokémon detail");
-        setPokemonDetail(null);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchPokemonDetail();
+    loadPokemon();
+
+    return () => {
+      controller.abort();
+    };
   }, [id]);
 
   if (isLoading) {
@@ -164,20 +175,27 @@ export default function PokemonDetailScreen() {
         </View>
 
         <View style={styles.typeContainer}>
-          {pokemon.types.map((type) => (
-            <View key={type} style={styles.typeBadge}>
-              <Text style={styles.typeText}>{type}</Text>
+          {pokemon.types.map(({ type }) => (
+            <View key={type.name} style={styles.typeBadge}>
+              <Text style={styles.typeText}>{type.name}</Text>
             </View>
           ))}
         </View>
 
-        <Image source={{ uri: pokemon.imageUrl }} style={styles.image} />
+        {pokemon.sprites.front_default ? (
+          <Image
+            source={{
+              uri: pokemon.sprites.front_default,
+            }}
+            style={styles.image}
+          />
+        ) : null}
       </View>
 
-      <View style={styles.section}>
+      {/* <View style={styles.section}>
         <Text style={styles.sectionTitle}>Sobre</Text>
         <Text style={styles.sectionText}>{pokemon.description}</Text>
-      </View>
+      </View> */}
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Informações básicas</Text>
@@ -194,9 +212,9 @@ export default function PokemonDetailScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Stats base</Text>
         {pokemon.stats.map((stat) => (
-          <View key={stat.name} style={styles.statRow}>
-            <Text style={styles.statName}>{stat.name.toUpperCase()}</Text>
-            <Text style={styles.statValue}>{stat.value}</Text>
+          <View key={stat.stat.name} style={styles.statRow}>
+            <Text style={styles.statName}>{stat.stat.name.toUpperCase()}</Text>
+            <Text style={styles.statValue}>{stat.base_stat}</Text>
           </View>
         ))}
       </View>
