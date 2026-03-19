@@ -15,6 +15,8 @@ import { RootStackParamList } from "../../routes";
 import {
   fetchPokemonDetail as fetchPokemonDetailAPI,
   type PokemonDetailResponse,
+  fetchPokemonSpecies,
+  type PokemonSpeciesResponse,
 } from "../../services/pokeapi";
 
 const MOCK_POKEMONS: PokemonDetailState[] = [
@@ -91,8 +93,33 @@ export default function PokemonDetailScreen() {
   const [pokemon, setPokemonDetail] = useState<PokemonDetailResponse | null>(
     null,
   );
+  const [description, setDescription] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  function getPokemonDescriptionFromSpecies(
+    species: PokemonSpeciesResponse,
+  ): string | null {
+    const ptEntry = species.flavor_text_entries.find(
+      (entry) => entry.language.name === "pt-BR",
+    );
+    if (ptEntry) {
+      return ptEntry.flavor_text
+        .replace(/\s+/g, " ")
+        .replace(/\f/g, " ")
+        .trim();
+    }
+    const enEntry = species.flavor_text_entries.find(
+      (entry) => entry.language.name === "en",
+    );
+    if (enEntry) {
+      return enEntry.flavor_text
+        .replace(/\s+/g, " ")
+        .replace(/\f/g, " ")
+        .trim();
+    }
+    return null;
+  }
 
   useEffect(() => {
     const controller = new AbortController();
@@ -102,10 +129,15 @@ export default function PokemonDetailScreen() {
       setError(null);
 
       try {
-        const data = await fetchPokemonDetailAPI(id, {
-          signal: controller.signal,
-        });
-        setPokemonDetail(data);
+        const [detailData, speciesData] = await Promise.all([
+          fetchPokemonDetailAPI(id, { signal: controller.signal }),
+          fetchPokemonSpecies(id, { signal: controller.signal }),
+        ]);
+
+        const description = getPokemonDescriptionFromSpecies(speciesData);
+
+        setPokemonDetail(detailData);
+        setDescription(description);
       } catch (error) {
         if (error instanceof Error && error.name !== "AbortError") {
           setError(error.message);
@@ -192,10 +224,12 @@ export default function PokemonDetailScreen() {
         ) : null}
       </View>
 
-      {/* <View style={styles.section}>
+      <View style={styles.section}>
         <Text style={styles.sectionTitle}>Sobre</Text>
-        <Text style={styles.sectionText}>{pokemon.description}</Text>
-      </View> */}
+        <Text style={styles.sectionText}>
+          {description ?? "Descrição não disponível."}
+        </Text>
+      </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Informações básicas</Text>
