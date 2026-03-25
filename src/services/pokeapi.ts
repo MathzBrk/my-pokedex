@@ -1,5 +1,40 @@
 const BASE_URL = 'https://pokeapi.co/api/v2';
 
+export type PokemonListItemUI = {
+  id: number;
+  name: string;
+  imageUrl: string | null;
+};
+
+function extractIdFromUrl(url: string): number {
+
+  const parts = url.split('/').filter(Boolean);
+  return parseInt(parts[parts.length - 1], 10);
+}
+
+export async function fetchPokemonListPage(limit = 0, offset = 0, options?: FetchOptions): Promise<{
+  items: PokemonListItemUI[];
+  total: number;
+  next: string | null;
+}> {
+  const data = await fetchPokemonList(limit, offset, options);
+
+  const items = data.results.map((item) => {
+    const id = extractIdFromUrl(item.url);
+    return {
+      id,
+      name: item.name,
+      imageUrl: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`,
+    };
+  });
+
+  return {
+    items,
+    total: data.count,
+    next: data.next,
+  };
+}
+
 type FetchOptions = {
   signal?: AbortSignal;
 };
@@ -28,6 +63,8 @@ export async function fetchPokemonList(
 
   return response.json();
 }
+
+
 
 export type PokemonDetailResponse = {
   id: number;
