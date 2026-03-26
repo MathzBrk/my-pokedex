@@ -37,7 +37,6 @@ export const createStyles = (theme: Theme) =>
       marginTop: 8,
     },
     typeBadge: {
-      backgroundColor: theme.colors.accent,
       borderRadius: 999,
       paddingHorizontal: 12,
       paddingVertical: 4,

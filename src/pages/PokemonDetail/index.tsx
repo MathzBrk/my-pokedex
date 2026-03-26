@@ -18,6 +18,7 @@ import {
   type PokemonSpeciesResponse,
 } from "../../services/pokeapi";
 import Sprites from "../../components/Sprites";
+import { pokemonTypeColors } from "../../global/pokemonTypeColors";
 
 const MOCK_POKEMONS: PokemonDetailState[] = [
   {
@@ -208,7 +209,16 @@ export default function PokemonDetailScreen() {
 
         <View style={styles.typeContainer}>
           {pokemon.types.map(({ type }) => (
-            <View key={type.name} style={styles.typeBadge}>
+            <View
+              key={type.name}
+              style={[
+                styles.typeBadge,
+                {
+                  backgroundColor:
+                    pokemonTypeColors[type.name] ?? theme.colors.accent,
+                },
+              ]}
+            >
               <Text style={styles.typeText}>{type.name}</Text>
             </View>
           ))}

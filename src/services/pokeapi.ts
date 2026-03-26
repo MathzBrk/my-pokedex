@@ -4,6 +4,7 @@ export type PokemonListItemUI = {
   id: number;
   name: string;
   imageUrl: string | null;
+  types: string[];
 };
 
 function extractIdFromUrl(url: string): number {
@@ -24,6 +25,7 @@ export async function fetchPokemonListPage(limit = 0, offset = 0, options?: Fetc
     return {
       id,
       name: item.name,
+      types: item.types.map((t) => t.type.name),
       imageUrl: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`,
     };
   });
@@ -46,6 +48,13 @@ export type PokemonListResponse = {
   results: {
     name: string;
     url: string;
+    types: {
+      slot: number;
+      type: {
+        name: string;
+        url: string;
+      };
+    }[]; 
   }[];
 };
 
@@ -61,10 +70,25 @@ export async function fetchPokemonList(
     throw new Error('Falha ao buscar lista de Pokémon');
   }
 
-  return response.json();
+  const data = await response.json();
+
+  const enrichedPokemons = await Promise.all(
+    data.results.map(async (pokemon: { name: string; url: string }) => {
+      const id = extractIdFromUrl(pokemon.url);
+
+      const detailResponse = await fetchPokemonDetail(id, options);
+      return {
+        ...pokemon,
+        types: detailResponse.types,
+      };
+    }),
+  );
+
+  return {
+    ...data,
+    results: enrichedPokemons,
+  };
 }
-
-
 
 export type PokemonDetailResponse = {
   id: number;

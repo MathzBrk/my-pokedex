@@ -16,6 +16,7 @@ import {
   fetchPokemonListPage,
   type PokemonListItemUI,
 } from "../../services/pokeapi";
+import { pokemonTypeColors } from "../../global/pokemonTypeColors";
 
 const PAGE_SIZE = 10;
 
@@ -102,13 +103,22 @@ export default function PokemonListScreen() {
     >
       <View style={styles.cardLeft}>
         <Text style={styles.cardName}>{item.name}</Text>
-        {/* <View style={styles.typeContainer}>
+        <View style={styles.typeContainer}>
           {item.types.map((type) => (
-            <View key={type} style={styles.typeBadge}>
+            <View
+              key={type}
+              style={[
+                styles.typeBadge,
+                {
+                  backgroundColor:
+                    pokemonTypeColors[type] ?? theme.colors.accent,
+                },
+              ]}
+            >
               <Text style={styles.typeText}>{type}</Text>
             </View>
           ))}
-        </View> */}
+        </View>
       </View>
       <Image source={{ uri: item.imageUrl! }} style={styles.cardImage} />
     </TouchableOpacity>
