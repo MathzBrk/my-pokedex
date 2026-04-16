@@ -10,8 +10,9 @@ import {
 } from "react-native";
 import { createStyles } from "./styles";
 import { useTheme } from "../../global/themes";
-import { useRoute } from "@react-navigation/native";
 import { RouteProp } from "@react-navigation/native";
+import { useRoute, useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../routes";
 import {
   fetchPokemonDetail,
@@ -26,6 +27,7 @@ import {
   toggleFavorite,
 } from "../../services/favoritesStorage";
 import Sprites from "../../components/Sprites";
+import { getPokemonPhoto, setPokemonPhoto } from "../../services/photoCache";
 
 const TYPE_COLORS: Record<string, string> = {
   normal: "#A8A77A",
@@ -56,7 +58,7 @@ export default function PokemonDetailScreen() {
   const theme = useTheme();
   const styles = createStyles(theme);
   const route = useRoute<RouteProp<RootStackParamList, "PokemonDetail">>();
-  const { id } = route.params;
+  const { id, photoUri } = route.params;
 
   const [pokemon, setPokemon] = useState<PokemonDetailResponse | null>(null);
   const [description, setDescription] = useState<string | null>(null);
@@ -65,6 +67,21 @@ export default function PokemonDetailScreen() {
 
   const [favorite, setFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(true);
+
+  useEffect(() => {
+    if (photoUri) setPokemonPhoto(id, photoUri);
+  }, [id, photoUri]);
+
+  const displayPhotoUri = photoUri ?? getPokemonPhoto(id);
+
+  const navigation =
+    useNavigation<
+      NativeStackNavigationProp<RootStackParamList, "PokemonDetail">
+    >();
+
+  function handleOpenCamera() {
+    navigation.navigate("PokemonCamera", { id });
+  }
 
   function getPokemonDescriptionFromSpecies(
     species: PokemonSpeciesResponse,
@@ -327,6 +344,25 @@ export default function PokemonDetailScreen() {
         >
           <Text style={{ fontWeight: "700", color: "#fff" }}>Compartilhar</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={handleOpenCamera}
+          style={{
+            backgroundColor: "#16a34a",
+
+            paddingHorizontal: 16,
+
+            paddingVertical: 10,
+
+            borderRadius: 999,
+
+            alignSelf: "flex-start",
+
+            marginBottom: 16,
+          }}
+        >
+          <Text style={{ fontWeight: "700", color: "#fff" }}>Abrir câmera</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.section}>
@@ -334,6 +370,19 @@ export default function PokemonDetailScreen() {
         <Text style={styles.sectionText}>
           {description ?? "Descrição não disponível."}
         </Text>
+      </View>
+
+      <View>
+        {displayPhotoUri && (
+          <Image
+            source={{ uri: displayPhotoUri }}
+            style={{
+              width: 200,
+              height: 250,
+              borderRadius: 12,
+            }}
+          />
+        )}
       </View>
 
       <View style={styles.section}>
