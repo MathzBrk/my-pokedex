@@ -28,6 +28,10 @@ import {
 } from "../../services/favoritesStorage";
 import Sprites from "../../components/Sprites";
 import { getPokemonPhoto, setPokemonPhoto } from "../../services/photoCache";
+import {
+  notifyPokemonFavorited,
+  scheduleQuickReminder,
+} from "../../services/localNotifications";
 
 const TYPE_COLORS: Record<string, string> = {
   normal: "#A8A77A",
@@ -119,6 +123,15 @@ export default function PokemonDetailScreen() {
     };
     const updated = await toggleFavorite(summary);
     setFavorite(updated.some((item) => item.id === pokemon.id));
+
+    const isNowFavorite = updated.some((item) => item.id === pokemon.id);
+    if (isNowFavorite) {
+      notifyPokemonFavorited(pokemon.name);
+    }
+  }
+
+  async function sendPokemonAlert() {
+    await scheduleQuickReminder(10);
   }
 
   async function handleSharePokemon() {
@@ -310,7 +323,7 @@ export default function PokemonDetailScreen() {
 
       <View
         style={{
-          flexDirection: "row",
+          flexDirection: "column",
           justifyContent: "space-between",
         }}
       >
@@ -328,6 +341,22 @@ export default function PokemonDetailScreen() {
         >
           <Text style={{ fontWeight: "700", color: "#111827" }}>
             {favorite ? "★ Favorito" : "☆ Favoritar"}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={sendPokemonAlert}
+          style={{
+            backgroundColor: "#6B7280",
+            paddingHorizontal: 16,
+            paddingVertical: 10,
+            borderRadius: 999,
+            alignSelf: "flex-start",
+            marginBottom: 16,
+          }}
+        >
+          <Text style={{ fontWeight: "700", color: "#fff" }}>
+            Lembrar mais tarde
           </Text>
         </TouchableOpacity>
 
